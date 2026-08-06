@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Language, MeterEntry, BudgetData, AppContent } from '../types';
+import { Language, ThemeMode, MeterEntry, BudgetData, AppContent } from '../types';
 import { contents } from '../data/content';
 
 interface AppContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
+  effectiveTheme: 'light' | 'dark';
   content: AppContent;
   activeTab: 'kitchen' | 'utilities' | 'cleaning' | 'sos' | 'achievements';
   setActiveTab: (tab: 'kitchen' | 'utilities' | 'cleaning' | 'sos' | 'achievements') => void;
@@ -64,6 +67,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem('app_lang');
     return (saved as Language) || 'ua';
   });
+
+  const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('app_theme');
+    return (saved as ThemeMode) || 'system';
+  });
+
+  const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+
+  // Listen to system theme changes automatically
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setSystemPrefersDark(e.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  const effectiveTheme: 'light' | 'dark' =
+    themeMode === 'system'
+      ? (systemPrefersDark ? 'dark' : 'light')
+      : themeMode;
+
+  // Apply dark class to <html> element
+  useEffect(() => {
+    const root = document.documentElement;
+    if (effectiveTheme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [effectiveTheme]);
+
+  const setThemeMode = (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    localStorage.setItem('app_theme', mode);
+  };
 
   const [activeTab, setActiveTab] = useState<'kitchen' | 'utilities' | 'cleaning' | 'sos' | 'achievements'>('kitchen');
 
@@ -290,6 +337,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         language,
         setLanguage,
+        themeMode,
+        setThemeMode,
+        effectiveTheme,
         content: contents[language],
         activeTab,
         setActiveTab,

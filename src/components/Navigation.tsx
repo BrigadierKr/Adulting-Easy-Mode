@@ -14,7 +14,7 @@ export const Navigation: React.FC = () => {
   ] as const;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#F7F7F2] border-t-4 border-black px-2 py-2.5 shadow-[0px_-4px_0px_0px_rgba(0,0,0,1)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#F7F7F2] dark:bg-slate-900 border-t-4 border-black dark:border-slate-700 px-2 py-2.5 shadow-[0px_-4px_0px_0px_rgba(0,0,0,1)] transition-colors">
       <div className="max-w-md mx-auto grid grid-cols-5 gap-1.5">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -24,10 +24,10 @@ export const Navigation: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-col items-center justify-center py-2 px-1 border-2 border-black transition-all ${
+              className={`flex flex-col items-center justify-center py-2 px-1 border-2 border-black dark:border-slate-600 transition-all ${
                 isActive
                   ? `${tab.activeBg} font-black text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] -translate-y-1`
-                  : 'bg-white text-black/80 hover:bg-zinc-100 font-bold hover:text-black'
+                  : 'bg-white dark:bg-slate-800 text-black/80 dark:text-slate-200 hover:bg-zinc-100 dark:hover:bg-slate-700 font-bold hover:text-black dark:hover:text-white'
               }`}
             >
               <Icon className="w-5 h-5 mb-0.5 stroke-[2.5]" />

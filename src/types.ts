@@ -1,4 +1,5 @@
 export type Language = 'ua' | 'en' | 'ru';
+export type ThemeMode = 'system' | 'light' | 'dark';
 
 export interface Recipe {
   id: string;

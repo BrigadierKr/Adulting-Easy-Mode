@@ -1,11 +1,18 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @layer base {
   body {
     background-color: #F7F7F2;
     color: #1A1A1A;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+}
+
+.dark body {
+  background-color: #0F172A;
+  color: #F8FAFC;
 }
 
 /* Artistic Flair / Neo-brutalist custom utilities */
@@ -16,10 +23,24 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+.dark .neo-card {
+  background-color: #1E293B;
+  border-color: #334155;
+  box-shadow: 6px 6px 0px 0px #000000;
+  color: #F8FAFC;
+}
+
 .neo-card-sm {
   background-color: #ffffff;
   border: 2px solid #000000;
   box-shadow: 4px 4px 0px 0px #000000;
+}
+
+.dark .neo-card-sm {
+  background-color: #1E293B;
+  border-color: #334155;
+  box-shadow: 4px 4px 0px 0px #000000;
+  color: #F8FAFC;
 }
 
 .neo-btn {
@@ -45,4 +66,9 @@
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.dark .neo-badge {
+  background-color: #F8FAFC;
+  color: #0F172A;
 }

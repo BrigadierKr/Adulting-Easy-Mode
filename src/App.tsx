@@ -20,7 +20,7 @@ const MainContent: React.FC = () => {
   }, [content]);
 
   return (
-    <div className="min-h-screen bg-[#F7F7F2] text-[#1A1A1A] pb-20 font-sans selection:bg-[#FFD600] selection:text-black">
+    <div className="min-h-screen bg-[#F7F7F2] dark:bg-slate-950 text-[#1A1A1A] dark:text-slate-100 pb-20 font-sans selection:bg-[#FFD600] selection:text-black transition-colors duration-200">
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 pt-6 space-y-6">
@@ -33,12 +33,12 @@ const MainContent: React.FC = () => {
         {activeTab === 'achievements' && <AchievementsModule />}
       </main>
 
-      <footer className="mt-12 max-w-3xl mx-auto px-4 border-t-4 border-black pt-6 pb-28 flex flex-col sm:flex-row justify-between items-center text-xs font-black uppercase tracking-tight gap-3">
+      <footer className="mt-12 max-w-3xl mx-auto px-4 border-t-4 border-black dark:border-slate-700 pt-6 pb-28 flex flex-col sm:flex-row justify-between items-center text-xs font-black uppercase tracking-tight gap-3">
         <div className="flex gap-4">
-          <span className="underline hover:text-red-600 cursor-pointer">САМ СОБІ МАМА</span>
-          <span className="underline hover:text-red-600 cursor-pointer">КУРС ВИЖИВАННЯ</span>
+          <span className="underline hover:text-red-600 dark:hover:text-red-400 cursor-pointer">САМ СОБІ МАМА</span>
+          <span className="underline hover:text-red-600 dark:hover:text-red-400 cursor-pointer">КУРС ВИЖИВАННЯ</span>
         </div>
-        <div className="flex items-center text-black font-extrabold">
+        <div className="flex items-center text-black dark:text-slate-200 font-extrabold">
           <span className="mr-1.5 text-base">⚡️</span> Дані зберігаються локально. Офлайн-режим.
         </div>
       </footer>
