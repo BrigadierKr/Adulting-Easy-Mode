@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Gauge, Calculator, Bell, Copy, Check, Plus, Trash2, ShieldCheck, AlertCircle, Sparkles, Send } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { enableReminders, remindersEnabled, remindersSupported, maybeNotifyMeterReadings } from '../utils/reminders';
+import { MeterChart } from './MeterChart';
+import { BudgetDonut } from './BudgetDonut';
 
 export const UtilitiesModule: React.FC = () => {
   const { content, meterEntries, addMeterEntry, deleteMeterEntry, budget, updateBudget, unlockAchievement } = useApp();
@@ -245,6 +247,9 @@ export const UtilitiesModule: React.FC = () => {
           )}
         </div>
 
+        {/* Meter Readings SVG Chart */}
+        <MeterChart entries={meterEntries} />
+
         {/* Form to log new meter readings */}
         <form onSubmit={handleAddMeter} className="p-4 bg-[#F7F7F2] border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mb-5 space-y-3">
           <h4 className="text-xs font-black uppercase tracking-wider text-black">
@@ -389,6 +394,9 @@ export const UtilitiesModule: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {/* Budget Donut Chart */}
+        <BudgetDonut budget={budget} />
 
         {/* Income & Expenses Input */}
         <div className="p-4 bg-[#B2FF59] border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mb-5 space-y-4">

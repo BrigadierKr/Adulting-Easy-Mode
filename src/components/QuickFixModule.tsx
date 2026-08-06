@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Search, Share2, Check, HelpCircle, Tags, ChevronDown, ChevronUp, MessageSquareQuote } from 'lucide-react';
+import { AlertTriangle, Search, Share2, Check, HelpCircle, Tags, ChevronDown, ChevronUp, MessageSquareQuote, Video } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { LaundrySymbol } from '../types';
 
@@ -8,9 +9,14 @@ export const QuickFixModule: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [activeSymbol, setActiveSymbol] = useState<LaundrySymbol | null>(content.sos.laundrySymbols[0]);
   const [expandedCard, setExpandedCard] = useState<string | null>('S-01');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
+
+  const toggleFlipCard = (id: string) => {
+    setFlippedCards((prev) => ({ ...prev, [id]: !prev[id] }));
+    unlockAchievement('ach-10'); // Залізна людина
+  };
 
   const [selectedQuizAnswers, setSelectedQuizAnswers] = useState<Record<string, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -121,7 +127,18 @@ export const QuickFixModule: React.FC = () => {
 
                 {isOpen && (
                   <div className="p-4 pt-1 border-t-3 border-black bg-white space-y-3">
-                    <div className="p-2.5 bg-[#FFD600] border-2 border-black text-xs font-black text-black uppercase tracking-wider mt-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    {/* YouTube Bridge Button */}
+                    <a
+                      href={`https://www.youtube.com/results?search_query=${encodeURIComponent(card.query || card.title)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 px-4 bg-black text-[#FFD600] font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFD600] hover:text-black transition-all active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-2 min-h-[44px] mt-2 mb-1"
+                    >
+                      <Video className="w-4 h-4 stroke-[2.5]" />
+                      <span>{content.sos.watchVideo}</span>
+                    </a>
+
+                    <div className="p-2.5 bg-[#FFD600] border-2 border-black text-xs font-black text-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                       {content.dontPanic}
                     </div>
 
@@ -198,58 +215,66 @@ export const QuickFixModule: React.FC = () => {
           ))}
         </div>
 
-        {/* Symbols Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-5">
+        {/* 3D Flip Cards Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 mb-2">
           {filteredSymbols.map((sym) => {
-            const isActive = activeSymbol?.id === sym.id;
+            const isFlipped = !!flippedCards[sym.id];
             return (
-              <button
+              <div
                 key={sym.id}
-                onClick={() => {
-                  setActiveSymbol(sym);
-                  unlockAchievement('ach-10'); // Залізна людина
-                }}
-                className={`p-3 border-2 border-black text-center transition-all active:translate-x-[1px] active:translate-y-[1px] ${
-                  isActive
-                    ? 'bg-[#FFD600] text-black font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-1'
-                    : 'bg-[#F7F7F2] text-black hover:bg-yellow-100 font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                }`}
+                className="h-48 cursor-pointer select-none"
+                style={{ perspective: '1000px' }}
+                onClick={() => toggleFlipCard(sym.id)}
+                aria-label={`${sym.title} - ${isFlipped ? sym.desc : 'натисніть щоб розвернути'}`}
               >
-                <div className="text-3xl font-black mb-1">{sym.symbol}</div>
-                <div className="text-[11px] font-black uppercase tracking-tight truncate">
-                  {sym.title}
-                </div>
-              </button>
+                <motion.div
+                  className="w-full h-full relative"
+                  initial={false}
+                  animate={{ rotateY: isFlipped ? 180 : 0 }}
+                  transition={{ duration: 0.45, ease: 'easeInOut' }}
+                  style={{ transformStyle: 'preserve-3d' }}
+                >
+                  {/* Front face (White) */}
+                  <div
+                    className="absolute inset-0 w-full h-full bg-white dark:bg-slate-800 border-3 border-black dark:border-slate-600 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-3 flex flex-col items-center justify-between text-center"
+                    style={{ backfaceVisibility: 'hidden' }}
+                  >
+                    <div className="w-full text-right">
+                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-zinc-100 dark:bg-slate-700 text-black dark:text-slate-200 border border-black dark:border-slate-500">
+                        {sym.category}
+                      </span>
+                    </div>
+                    <div className="text-4xl font-black text-black dark:text-white">{sym.symbol}</div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase text-black dark:text-white leading-tight line-clamp-2 mb-1">
+                        {sym.title}
+                      </h4>
+                      <span className="text-[10px] font-extrabold text-black/60 dark:text-slate-400 flex items-center justify-center gap-1">
+                        <span>🔄</span> Тапни підказку
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Back face (Yellow) */}
+                  <div
+                    className="absolute inset-0 w-full h-full bg-[#FFD600] text-black border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-3 flex flex-col justify-between text-center"
+                    style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                  >
+                    <div className="space-y-1">
+                      <span className="text-2xl block">{sym.symbol}</span>
+                      <p className="text-[11px] font-black uppercase leading-tight border-b border-black/20 pb-1">
+                        {sym.desc}
+                      </p>
+                    </div>
+                    <div className="bg-white p-1.5 border-2 border-black text-[10px] font-bold italic line-clamp-3 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] text-black">
+                      «{sym.momNote}»
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
             );
           })}
         </div>
-
-        {/* Active Symbol Decoder Detail */}
-        {activeSymbol && (
-          <div className="p-4 bg-[#FFD600] border-3 border-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-2.5">
-            <div className="flex items-center gap-3">
-              <span className="text-4xl p-2 bg-white border-2 border-black text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                {activeSymbol.symbol}
-              </span>
-              <div>
-                <h4 className="text-lg font-black uppercase text-black">
-                  {activeSymbol.title}
-                </h4>
-                <p className="text-xs font-black uppercase tracking-wider text-black/90">
-                  {activeSymbol.desc}
-                </p>
-              </div>
-            </div>
-
-            <div className="p-3 bg-white border-2 border-black text-xs font-bold text-black flex items-start gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-              <MessageSquareQuote className="w-4 h-4 text-black shrink-0 mt-0.5 stroke-[3]" />
-              <div>
-                <span className="font-black uppercase block mb-0.5">Порада від мами:</span>
-                <span className="italic">«{activeSymbol.momNote}»</span>
-              </div>
-            </div>
-          </div>
-        )}
       </section>
 
       {/* SOS Quiz */}

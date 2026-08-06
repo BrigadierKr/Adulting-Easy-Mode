@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Utensils, Flame, Clock, Droplets, MessageCircle, HelpCircle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Utensils, Flame, Clock, Droplets, MessageCircle, HelpCircle, CheckCircle2, ChevronDown, ChevronUp, Video } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CookingTimer } from './CookingTimer';
 
@@ -89,6 +89,17 @@ export const KitchenModule: React.FC = () => {
 
                 {isOpen && (
                   <div className="p-4 pt-2 border-t-3 border-black bg-white space-y-3">
+                    {/* YouTube Bridge Button */}
+                    <a
+                      href={`https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.query || recipe.title)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 px-4 bg-black text-[#FFD600] font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFD600] hover:text-black transition-all active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-2 min-h-[44px]"
+                    >
+                      <Video className="w-4 h-4 stroke-[2.5]" />
+                      <span>{content.kitchen.watchVideo}</span>
+                    </a>
+
                     <ol className="space-y-2 text-sm text-black font-bold list-decimal list-inside pt-1">
                       {recipe.steps.map((step, idx) => (
                         <li key={idx} className="leading-relaxed">

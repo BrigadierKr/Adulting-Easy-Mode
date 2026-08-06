@@ -97,6 +97,7 @@ export interface AppContent {
     timerStart: string;
     timerStop: string;
     timerDone: string;
+    watchVideo: string;
   };
   utilities: {
     guideTitle: string;
@@ -115,12 +116,24 @@ export interface AppContent {
       hotWater: string;
       gas: string;
     };
+    chartTitle: string;
+    chartElectricity: string;
+    chartWater: string;
     budgetTitle: string;
     budgetSubtitle: string;
     incomeLabel: string;
     formulaTitle: string;
     joyMandatory: string;
     shoppingTip: string;
+    budgetLabels: {
+      housing: string;
+      utilities: string;
+      food: string;
+      transport: string;
+      phone: string;
+      joy: string;
+      reserve: string;
+    };
   };
   cleaning: {
     dailyTitle: string;
@@ -141,6 +154,7 @@ export interface AppContent {
     quiz: QuizQuestion[];
     shareCard: string;
     linkCopied: string;
+    watchVideo: string;
   };
   achievements: {
     title: string;
