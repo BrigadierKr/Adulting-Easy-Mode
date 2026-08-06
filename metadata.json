@@ -1,0 +1,6 @@
+{
+  "name": "Сам собі мама",
+  "description": "Гумористичний PWA-застосунок для молоді про базові побутові навички: рецепти, комунальні показники, прибирання, SOS-підказки, квізи та досягнення.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
