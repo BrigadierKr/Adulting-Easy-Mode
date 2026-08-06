@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
-import { Gauge, Calculator, Bell, Copy, Check, Plus, Trash2, ShieldCheck, AlertCircle, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Gauge, Calculator, Bell, Copy, Check, Plus, Trash2, ShieldCheck, AlertCircle, Sparkles, Send } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const UtilitiesModule: React.FC = () => {
   const { content, meterEntries, addMeterEntry, deleteMeterEntry, budget, updateBudget, unlockAchievement } = useApp();
 
   const [copied, setCopied] = useState(false);
-  const [notificationsGranted, setNotificationsGranted] = useState(
-    typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted'
-  );
+  const [testSent, setTestSent] = useState(false);
+
+  // Notification API support and permission state
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return 'unsupported';
+    }
+    return Notification.permission;
+  });
 
   // Meter form state
   const [elec, setElec] = useState(1320);
@@ -17,15 +23,96 @@ export const UtilitiesModule: React.FC = () => {
   const [gasVal, setGasVal] = useState(118);
   const [noteVal, setNoteVal] = useState('');
 
-  const requestNotificationPermission = async () => {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        setNotificationsGranted(true);
-        unlockAchievement('ach-5');
+  // Check monthly reminder schedule (1–5 of each month)
+  const checkAndTriggerMonthlyReminder = (permissionStatus: string) => {
+    if (permissionStatus !== 'granted') return;
+
+    const now = new Date();
+    const dayOfMonth = now.getDate();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const lastNotifiedMonth = localStorage.getItem('last_meter_notification_month');
+
+    // Trigger notification if today is between day 1 and 5 of the month and hasn't been triggered yet
+    if (dayOfMonth >= 1 && dayOfMonth <= 5 && lastNotifiedMonth !== currentMonthKey) {
+      try {
+        new Notification('📊 Час передати показники лічильників!', {
+          body: 'Настало 1–5 число місяця! Будь ласка, зніміть та передайте показники світла, води та газу.',
+          tag: 'meter-monthly-reminder',
+        });
+        localStorage.setItem('last_meter_notification_month', currentMonthKey);
+      } catch (err) {
+        console.error('Failed to trigger notification:', err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      const currentPerm = Notification.permission;
+      setNotificationPermission(currentPerm);
+      if (currentPerm === 'granted') {
+        checkAndTriggerMonthlyReminder(currentPerm);
       }
     } else {
-      alert('Ваш браузер не підтримує Notification API');
+      setNotificationPermission('unsupported');
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      alert('Ваш браузер не підтримує Web Notification API.');
+      setNotificationPermission('unsupported');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+
+      if (permission === 'granted') {
+        unlockAchievement('ach-05');
+        unlockAchievement('ach-5');
+        localStorage.setItem('meter_notifications_enabled', 'true');
+
+        // Send welcome notification
+        try {
+          new Notification('🔔 Нагадування про лічильники увімкнено!', {
+            body: 'З 1 по 5 число кожного місяця ми нагадуватимемо про показники лічильників.',
+            tag: 'meter-welcome',
+          });
+        } catch (e) {
+          console.error(e);
+        }
+
+        checkAndTriggerMonthlyReminder(permission);
+      } else if (permission === 'denied') {
+        alert('Сповіщення заблоковано в налаштуваннях браузера. Щоб увімкнути, дозвольте сповіщення в налаштуваннях сайту.');
+      }
+    } catch (err) {
+      // Fallback for older browsers
+      Notification.requestPermission((permission) => {
+        setNotificationPermission(permission);
+        if (permission === 'granted') {
+          unlockAchievement('ach-05');
+          unlockAchievement('ach-5');
+          localStorage.setItem('meter_notifications_enabled', 'true');
+          checkAndTriggerMonthlyReminder(permission);
+        }
+      });
+    }
+  };
+
+  const sendTestNotification = () => {
+    if (notificationPermission !== 'granted') return;
+    try {
+      new Notification('⚡ Тестове сповіщення: Сам собі мама', {
+        body: '1–5 число: час передати показники світла, води та газу! Все працює ідеально.',
+        tag: 'meter-test',
+      });
+      setTestSent(true);
+      setTimeout(() => setTestSent(false), 3000);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -103,7 +190,7 @@ export const UtilitiesModule: React.FC = () => {
       </section>
 
       {/* Reminder & Notification Banner */}
-      <section className="bg-[#B2FF59] border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-black flex flex-col sm:flex-row items-center justify-between gap-4">
+      <section className="bg-[#B2FF59] border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-black flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="p-3 bg-black text-white border-2 border-black shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] shrink-0">
             <Bell className="w-6 h-6 stroke-[2.5] animate-bounce" />
@@ -111,21 +198,44 @@ export const UtilitiesModule: React.FC = () => {
           <div>
             <h3 className="text-lg font-black uppercase tracking-tight text-black">{content.utilities.reminderTitle}</h3>
             <p className="text-xs font-bold text-black/90 mt-0.5">{content.utilities.reminderText}</p>
+            <p className="text-[11px] font-black italic text-black/80 mt-1">
+              📅 Автоматичне сповіщення браузера 1–5 числа щомісяця
+            </p>
           </div>
         </div>
 
-        {!notificationsGranted ? (
-          <button
-            onClick={requestNotificationPermission}
-            className="w-full sm:w-auto px-5 py-3 bg-black text-white hover:bg-zinc-800 font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] transition-all shrink-0"
-          >
-            {content.utilities.enableNotifications}
-          </button>
-        ) : (
-          <div className="px-4 py-2 bg-black text-white border-2 border-black text-xs font-black uppercase tracking-wider flex items-center gap-2 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-            <ShieldCheck className="w-4 h-4 text-[#B2FF59] stroke-[3]" /> {content.utilities.notificationsEnabled}
-          </div>
-        )}
+        <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto shrink-0">
+          {notificationPermission === 'unsupported' ? (
+            <div className="px-4 py-2 bg-[#FF5252] text-white border-2 border-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              ⚠️ Браузер не підтримує сповіщення
+            </div>
+          ) : notificationPermission === 'denied' ? (
+            <div className="px-4 py-2 bg-[#FF5252] text-white border-2 border-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              🚫 Сповіщення заблоковано браузером
+            </div>
+          ) : notificationPermission === 'granted' ? (
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+              <div className="px-4 py-2.5 bg-black text-white border-2 border-black text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] w-full sm:w-auto">
+                <ShieldCheck className="w-4 h-4 text-[#B2FF59] stroke-[3]" /> {content.utilities.notificationsEnabled}
+              </div>
+              <button
+                onClick={sendTestNotification}
+                className="px-3.5 py-2.5 bg-white hover:bg-yellow-200 text-black border-2 border-black font-black text-xs uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto"
+                title="Перевірити як виглядає сповіщення"
+              >
+                <Send className="w-3.5 h-3.5 stroke-[2.5]" />
+                {testSent ? '✓ Відправлено!' : 'Тест'}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={requestNotificationPermission}
+              className="w-full sm:w-auto px-5 py-3 bg-black text-white hover:bg-zinc-800 font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] transition-all shrink-0"
+            >
+              {content.utilities.enableNotifications}
+            </button>
+          )}
+        </div>
       </section>
 
       {/* Meter Tracker Form & Log */}
