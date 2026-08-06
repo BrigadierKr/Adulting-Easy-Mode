@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
@@ -10,9 +10,14 @@ import { QuickFixModule } from './components/QuickFixModule';
 import { AchievementsModule } from './components/AchievementsModule';
 import { AchievementToast } from './components/AchievementToast';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
+import { maybeNotifyMeterReadings } from './utils/reminders';
 
 const MainContent: React.FC = () => {
   const { activeTab } = useApp();
+
+  useEffect(() => {
+    maybeNotifyMeterReadings('Настало 1–5 число місяця! Будь ласка, передайте показники лічильників.');
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F7F7F2] text-[#1A1A1A] pb-20 font-sans selection:bg-[#FFD600] selection:text-black">

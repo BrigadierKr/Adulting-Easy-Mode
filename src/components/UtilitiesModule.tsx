@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Gauge, Calculator, Bell, Copy, Check, Plus, Trash2, ShieldCheck, AlertCircle, Sparkles, Send } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { enableReminders, remindersEnabled, remindersSupported, maybeNotifyMeterReadings } from '../utils/reminders';
 
 export const UtilitiesModule: React.FC = () => {
   const { content, meterEntries, addMeterEntry, deleteMeterEntry, budget, updateBudget, unlockAchievement } = useApp();
@@ -59,46 +60,35 @@ export const UtilitiesModule: React.FC = () => {
   }, []);
 
   const requestNotificationPermission = async () => {
-    if (typeof window === 'undefined' || !('Notification' in window)) {
+    if (!remindersSupported()) {
       alert('Ваш браузер не підтримує Web Notification API.');
       setNotificationPermission('unsupported');
       return;
     }
 
-    try {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
+    const enabled = await enableReminders();
+    if (enabled) {
+      setNotificationPermission('granted');
+      unlockAchievement('ach-05');
+      unlockAchievement('ach-5');
 
-      if (permission === 'granted') {
-        unlockAchievement('ach-05');
-        unlockAchievement('ach-5');
-        localStorage.setItem('meter_notifications_enabled', 'true');
-
-        // Send welcome notification
-        try {
-          new Notification('🔔 Нагадування про лічильники увімкнено!', {
-            body: 'З 1 по 5 число кожного місяця ми нагадуватимемо про показники лічильників.',
-            tag: 'meter-welcome',
-          });
-        } catch (e) {
-          console.error(e);
-        }
-
-        checkAndTriggerMonthlyReminder(permission);
-      } else if (permission === 'denied') {
-        alert('Сповіщення заблоковано в налаштуваннях браузера. Щоб увімкнути, дозвольте сповіщення в налаштуваннях сайту.');
+      try {
+        new Notification('🔔 Нагадування про лічильники увімкнено!', {
+          body: 'З 1 по 5 число кожного місяця ми нагадуватимемо про показники лічильників.',
+          tag: 'meter-welcome',
+        });
+      } catch (e) {
+        console.error(e);
       }
-    } catch (err) {
-      // Fallback for older browsers
-      Notification.requestPermission((permission) => {
-        setNotificationPermission(permission);
-        if (permission === 'granted') {
-          unlockAchievement('ach-05');
-          unlockAchievement('ach-5');
-          localStorage.setItem('meter_notifications_enabled', 'true');
-          checkAndTriggerMonthlyReminder(permission);
-        }
-      });
+
+      maybeNotifyMeterReadings('Настало 1–5 число місяця! Будь ласка, зніміть та передайте показники.');
+    } else {
+      if (Notification.permission === 'denied') {
+        setNotificationPermission('denied');
+        alert('Сповіщення заблоковано в налаштуваннях браузера. Щоб увімкнути, дозвольте сповіщення в налаштуваннях сайту.');
+      } else {
+        setNotificationPermission(Notification.permission);
+      }
     }
   };
 
