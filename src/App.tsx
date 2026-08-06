@@ -13,11 +13,11 @@ import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { maybeNotifyMeterReadings } from './utils/reminders';
 
 const MainContent: React.FC = () => {
-  const { activeTab } = useApp();
+  const { activeTab, content } = useApp();
 
   useEffect(() => {
-    maybeNotifyMeterReadings('Настало 1–5 число місяця! Будь ласка, передайте показники лічильників.');
-  }, []);
+    maybeNotifyMeterReadings(content.utilities.reminderText);
+  }, [content]);
 
   return (
     <div className="min-h-screen bg-[#F7F7F2] text-[#1A1A1A] pb-20 font-sans selection:bg-[#FFD600] selection:text-black">

@@ -81,7 +81,7 @@ export const UtilitiesModule: React.FC = () => {
         console.error(e);
       }
 
-      maybeNotifyMeterReadings('Настало 1–5 число місяця! Будь ласка, зніміть та передайте показники.');
+      maybeNotifyMeterReadings(content.utilities.reminderText);
     } else {
       if (Notification.permission === 'denied') {
         setNotificationPermission('denied');
