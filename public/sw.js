@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sam-sobi-mama-v2';
+const CACHE_NAME = 'sam-sobi-mama-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   '/icon.svg'
 ];
 
-// Install Event - Pre-cache core shell
+// Install Event - Pre-cache core shell & skip waiting
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -18,7 +18,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate Event - Clean old caches & claim clients
+// Activate Event - Delete all old caches & claim clients immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -31,31 +31,67 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event - Stale-while-revalidate for network requests with cache fallback
+// Fetch Event
 self.addEventListener('fetch', (event) => {
-  // Ignore non-GET requests or chrome-extension URLs
+  // Ignore non-GET requests or non-http(s)
   if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request)
+  const url = new URL(event.request.url);
+
+  // 1. Navigation requests (HTML pages) -> Network-first with Cache fallback
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          if (networkResponse && networkResponse.status === 200) {
             const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
           }
           return networkResponse;
         })
         .catch(() => {
-          // Return cached response if offline or fetch fails
-          return cachedResponse;
-        });
+          return caches.match(event.request).then((cached) => {
+            return cached || caches.match('/index.html') || caches.match('/');
+          });
+        })
+    );
+    return;
+  }
 
-      return cachedResponse || fetchPromise;
-    })
+  // 2. Immutable hashed assets in /assets/ -> Cache-first with Network fallback
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          }
+          return networkResponse;
+        });
+      })
+    );
+    return;
+  }
+
+  // 3. Other GET requests -> Network-first with Cache fallback
+  event.respondWith(
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });
+

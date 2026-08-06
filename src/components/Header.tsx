@@ -44,7 +44,13 @@ export const Header: React.FC = () => {
           <button
             onClick={() => setActiveTab('achievements')}
             className="px-2 py-1.5 sm:px-2.5 sm:py-1.5 bg-[#FFD600] border-2 border-black text-black text-xs font-black uppercase flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-300 transition-all active:translate-x-[1px] active:translate-y-[1px]"
-            title="Перейти до досягнень"
+            title={
+              language === 'ua'
+                ? 'Перейти до досягнень'
+                : language === 'en'
+                ? 'View achievements'
+                : 'Перейти к достижениям'
+            }
           >
             <Award className="w-4 h-4 text-black stroke-[3]" />
             <span className="hidden sm:inline">{unlockedAchievements.length}/20</span>
@@ -55,7 +61,13 @@ export const Header: React.FC = () => {
           <button
             onClick={() => setIsSearchOpen(true)}
             className="p-1.5 sm:p-2 bg-white dark:bg-slate-800 border-2 border-black dark:border-slate-600 text-black dark:text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#B2FF59] dark:hover:bg-lime-600 transition-all active:translate-x-[1px] active:translate-y-[1px]"
-            title="Пошук"
+            title={
+              language === 'ua'
+                ? 'Пошук'
+                : language === 'en'
+                ? 'Search'
+                : 'Поиск'
+            }
           >
             <Search className="w-4 h-4 stroke-[3]" />
           </button>
