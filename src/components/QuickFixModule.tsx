@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Search, Share2, Check, HelpCircle, Tags, ChevronDown, ChevronUp, MessageSquareQuote, Video } from 'lucide-react';
+import { AlertTriangle, Search, Share2, Check, HelpCircle, Tags, ChevronDown, ChevronUp, MessageSquareQuote, Video, Wrench } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { LaundrySymbol } from '../types';
 
 export const QuickFixModule: React.FC = () => {
-  const { content, unlockAchievement, markQuizCompleted } = useApp();
+  const { content, language, unlockAchievement, markQuizCompleted, completedDropCards, toggleDropCardDone } = useApp();
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [expandedCard, setExpandedCard] = useState<string | null>('S-01');
+  const [expandedRepairCard, setExpandedRepairCard] = useState<string | null>('r-01');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
 
@@ -50,6 +51,13 @@ export const QuickFixModule: React.FC = () => {
       c.steps.some((s) => s.toLowerCase().includes(search.toLowerCase()))
   );
 
+  const filteredRepairCards = content.repair.cards.filter(
+    (c) =>
+      c.title.toLowerCase().includes(search.toLowerCase()) ||
+      c.query.toLowerCase().includes(search.toLowerCase()) ||
+      c.steps.some((s) => s.toLowerCase().includes(search.toLowerCase()))
+  );
+
   const filteredSymbols = content.sos.laundrySymbols.filter((s) => {
     const matchesCat = selectedCategory === 'all' || s.category === selectedCategory;
     const matchesSearch =
@@ -65,8 +73,12 @@ export const QuickFixModule: React.FC = () => {
 
   const handleQuizSubmit = () => {
     setQuizSubmitted(true);
-    markQuizCompleted('sos_quiz');
+    const isFlawless = content.sos.quiz.every(
+      (q) => selectedQuizAnswers[q.id] === q.correctIndex
+    );
+    markQuizCompleted('sos_quiz', isFlawless);
   };
+
 
   return (
     <div className="space-y-6 text-black">
@@ -127,16 +139,29 @@ export const QuickFixModule: React.FC = () => {
 
                 {isOpen && (
                   <div className="p-4 pt-1 border-t-3 border-black bg-white space-y-3">
-                    {/* YouTube Bridge Button */}
-                    <a
-                      href={`https://www.youtube.com/results?search_query=${encodeURIComponent(card.query || card.title)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2.5 px-4 bg-black text-[#FFD600] font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFD600] hover:text-black transition-all active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-2 min-h-[44px] mt-2 mb-1"
-                    >
-                      <Video className="w-4 h-4 stroke-[2.5]" />
-                      <span>{content.sos.watchVideo}</span>
-                    </a>
+                    {/* Video Rule (Rule 4) */}
+                    {card.videoSafe !== false ? (
+                      <a
+                        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(card.query || card.title)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 px-4 bg-black text-[#FFD600] font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFD600] hover:text-black transition-all active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-2 min-h-[44px] mt-2 mb-1"
+                      >
+                        <Video className="w-4 h-4 stroke-[2.5]" />
+                        <span>{content.sos.watchVideo}</span>
+                      </a>
+                    ) : (
+                      <div className="w-full py-2.5 px-3 bg-[#FF5252] text-white font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 min-h-[44px] mt-2 mb-1">
+                        <AlertTriangle className="w-4 h-4 stroke-[2.5] shrink-0" />
+                        <span>
+                          {language === 'ua'
+                            ? '⚠️ Не знімати на відео — небезпечно'
+                            : language === 'en'
+                            ? '⚠️ Do not film on video — dangerous'
+                            : '⚠️ Не снимать на видео — опасно'}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="p-2.5 bg-[#FFD600] border-2 border-black text-xs font-black text-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                       {content.dontPanic}
@@ -160,6 +185,140 @@ export const QuickFixModule: React.FC = () => {
                     )}
 
                     <div className="pt-1 flex justify-end">
+                      <button
+                        onClick={() => handleShare(card.title, card.id)}
+                        className="px-3.5 py-1.5 bg-white border-2 border-black text-xs font-black text-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-300 transition-all flex items-center gap-1.5 active:translate-x-[1px] active:translate-y-[1px]"
+                      >
+                        {copiedId === card.id ? <Check className="w-4 h-4 text-black stroke-[3]" /> : <Share2 className="w-4 h-4 text-black stroke-[3]" />}
+                        {copiedId === card.id ? content.sos.linkCopied : content.sos.shareCard}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Handyman Basics Section [🍂 ОСІННІЙ ДРОП] */}
+      <section className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-slate-900 text-white border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              <Wrench className="w-6 h-6 stroke-[2.5]" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-tight text-black">
+                {content.repair.title}
+              </h2>
+              <p className="text-xs font-bold italic text-black/80">
+                {content.repair.subtitle}
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 bg-black text-[#FFD600] border-2 border-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            🍂 ОСІННІЙ ДРОП
+          </span>
+        </div>
+
+        <div className="space-y-3.5">
+          {filteredRepairCards.map((card) => {
+            const isOpen = expandedRepairCard === card.id;
+            const isDone = completedDropCards.includes(card.id.toLowerCase());
+            return (
+              <div
+                key={card.id}
+                className={`border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                  isDone ? 'bg-emerald-50/70 border-emerald-950' : 'bg-white'
+                }`}
+              >
+                <button
+                  onClick={() => setExpandedRepairCard((prev) => (prev === card.id ? null : card.id))}
+                  className="w-full p-4 flex items-center justify-between text-left gap-3 focus:outline-hidden hover:bg-yellow-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 bg-slate-900 text-white border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                      {card.badge || card.id.toUpperCase()}
+                    </span>
+                    <h3 className="text-base font-black text-black uppercase">
+                      {card.title}
+                    </h3>
+                    {isDone && (
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-[#B2FF59] text-black border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                        <Check className="w-3 h-3 stroke-[3]" />
+                        {language === 'ua' ? 'Зроблено' : language === 'en' ? 'Done' : 'Сделано'}
+                      </span>
+                    )}
+                  </div>
+                  {isOpen ? (
+                    <ChevronUp className="w-5 h-5 text-black stroke-[3]" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-black stroke-[3]" />
+                  )}
+                </button>
+
+                {isOpen && (
+                  <div className="p-4 pt-1 border-t-3 border-black bg-white space-y-3">
+                    {/* Video Rule (Rule 4) */}
+                    {card.videoSafe !== false ? (
+                      <a
+                        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(card.query || card.title)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 px-4 bg-black text-[#FFD600] font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFD600] hover:text-black transition-all active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-2 min-h-[44px] mt-2 mb-1"
+                      >
+                        <Video className="w-4 h-4 stroke-[2.5]" />
+                        <span>{content.sos.watchVideo}</span>
+                      </a>
+                    ) : (
+                      <div className="w-full py-2.5 px-3 bg-[#FF5252] text-white font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 min-h-[44px] mt-2 mb-1">
+                        <AlertTriangle className="w-4 h-4 stroke-[2.5] shrink-0" />
+                        <span>
+                          {language === 'ua'
+                            ? '⚠️ Не знімати на відео — небезпечно'
+                            : language === 'en'
+                            ? '⚠️ Do not film on video — dangerous'
+                            : '⚠️ Не снимать на видео — опасно'}
+                        </span>
+                      </div>
+                    )}
+
+                    <ol className="space-y-2 text-xs font-bold text-black">
+                      {card.steps.map((step, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 p-2 bg-[#F7F7F2] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          <span className="w-5 h-5 bg-black text-white text-[10px] font-black flex items-center justify-center shrink-0 border border-black">
+                            {idx + 1}
+                          </span>
+                          <span className="font-extrabold">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+
+                    {card.humor && (
+                      <p className="text-xs font-bold italic text-black bg-[#B2FF59] p-2.5 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        💬 «{card.humor}»
+                      </p>
+                    )}
+
+                    {/* Action buttons: "✓ Зроблено" and Share */}
+                    <div className="pt-2 flex items-center justify-between flex-wrap gap-2">
+                      <button
+                        onClick={() => toggleDropCardDone(card.id)}
+                        className={`px-3.5 py-2 border-2 border-black text-xs font-black uppercase flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[1px] active:translate-y-[1px] ${
+                          isDone
+                            ? 'bg-[#B2FF59] text-black hover:bg-lime-400'
+                            : 'bg-white text-black hover:bg-yellow-200'
+                        }`}
+                      >
+                        <Check className="w-4 h-4 stroke-[3]" />
+                        <span>
+                          {isDone
+                            ? (language === 'ua' ? '✓ Зроблено' : language === 'en' ? '✓ Done' : '✓ Сделано')
+                            : (language === 'ua' ? 'Позначити: Зроблено' : language === 'en' ? 'Mark as done' : 'Отметить: Сделано')}
+                        </span>
+                      </button>
+
                       <button
                         onClick={() => handleShare(card.title, card.id)}
                         className="px-3.5 py-1.5 bg-white border-2 border-black text-xs font-black text-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-300 transition-all flex items-center gap-1.5 active:translate-x-[1px] active:translate-y-[1px]"

@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Gauge, Calculator, Bell, Copy, Check, Plus, Trash2, ShieldCheck, AlertCircle, Sparkles, Send } from 'lucide-react';
+import { Gauge, Calculator, Bell, Copy, Check, Plus, Trash2, ShieldCheck, AlertCircle, Sparkles, Send, Flame, ChevronDown, ChevronUp, Video, AlertTriangle, Share2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { enableReminders, remindersEnabled, remindersSupported, maybeNotifyMeterReadings } from '../utils/reminders';
 import { MeterChart } from './MeterChart';
 import { BudgetDonut } from './BudgetDonut';
 
 export const UtilitiesModule: React.FC = () => {
-  const { content, meterEntries, addMeterEntry, deleteMeterEntry, budget, updateBudget, unlockAchievement } = useApp();
+  const { content, language, meterEntries, addMeterEntry, deleteMeterEntry, budget, updateBudget, unlockAchievement, completedDropCards, toggleDropCardDone } = useApp();
 
   const [copied, setCopied] = useState(false);
   const [testSent, setTestSent] = useState(false);
+  const [expandedHeatingCard, setExpandedHeatingCard] = useState<string | null>('h-01');
+  const [copiedCardId, setCopiedCardId] = useState<string | null>(null);
 
   // Notification API support and permission state
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() => {
@@ -148,6 +150,155 @@ export const UtilitiesModule: React.FC = () => {
 
   return (
     <div className="space-y-6 text-black">
+      {/* Heating Season Accordion [🍂 ОСІННІЙ ДРОП] */}
+      <section className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-orange-500 text-white border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              <Flame className="w-6 h-6 stroke-[2.5]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-black uppercase tracking-tight text-black">
+                  {content.heating.title}
+                </h2>
+              </div>
+              <p className="text-xs font-bold italic text-black/80">
+                {content.heating.subtitle}
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 bg-black text-[#FFD600] border-2 border-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            🍂 ОСІННІЙ ДРОП
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {content.heating.cards.map((card) => {
+            const isOpen = expandedHeatingCard === card.id;
+            const isDone = completedDropCards.includes(card.id.toLowerCase());
+            return (
+              <div
+                key={card.id}
+                className={`border-3 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                  isDone ? 'bg-emerald-50/70 border-emerald-950' : 'bg-white'
+                }`}
+              >
+                <button
+                  onClick={() => setExpandedHeatingCard((prev) => (prev === card.id ? null : card.id))}
+                  className="w-full p-4 flex items-center justify-between text-left gap-3 focus:outline-hidden hover:bg-orange-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-orange-500 text-white border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                      {card.badge || card.id.toUpperCase()}
+                    </span>
+                    <h3 className="text-base font-black text-black uppercase">
+                      {card.title}
+                    </h3>
+                    {isDone && (
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-[#B2FF59] text-black border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                        <Check className="w-3 h-3 stroke-[3]" />
+                        {language === 'ua' ? 'Зроблено' : language === 'en' ? 'Done' : 'Сделано'}
+                      </span>
+                    )}
+                  </div>
+                  {isOpen ? (
+                    <ChevronUp className="w-5 h-5 text-black stroke-[3]" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-black stroke-[3]" />
+                  )}
+                </button>
+
+                {isOpen && (
+                  <div className="p-4 pt-1 border-t-3 border-black bg-white space-y-3">
+                    {/* Video Rule (Rule 4) */}
+                    {card.videoSafe !== false ? (
+                      <a
+                        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(card.query || card.title)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 px-4 bg-black text-[#FFD600] font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-[#FFD600] hover:text-black transition-all active:translate-x-[1px] active:translate-y-[1px] flex items-center justify-center gap-2 min-h-[44px] mt-2 mb-1"
+                      >
+                        <Video className="w-4 h-4 stroke-[2.5]" />
+                        <span>{content.kitchen.watchVideo}</span>
+                      </a>
+                    ) : (
+                      <div className="w-full py-2.5 px-3 bg-[#FF5252] text-white font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 min-h-[44px] mt-2 mb-1">
+                        <AlertTriangle className="w-4 h-4 stroke-[2.5] shrink-0" />
+                        <span>
+                          {language === 'ua'
+                            ? '⚠️ Не знімати на відео — небезпечно'
+                            : language === 'en'
+                            ? '⚠️ Do not film on video — dangerous'
+                            : '⚠️ Не снимать на видео — опасно'}
+                        </span>
+                      </div>
+                    )}
+
+                    <ol className="space-y-2 text-xs font-bold text-black">
+                      {card.steps.map((step, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 p-2 bg-[#F7F7F2] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                          <span className="w-5 h-5 bg-black text-white text-[10px] font-black flex items-center justify-center shrink-0 border border-black">
+                            {idx + 1}
+                          </span>
+                          <span className="font-extrabold">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+
+                    {card.humor && (
+                      <p className="text-xs font-bold italic text-black bg-[#FFE082] p-2.5 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        💬 «{card.humor}»
+                      </p>
+                    )}
+
+                    {/* Action buttons: "✓ Зроблено" and Share */}
+                    <div className="pt-2 flex items-center justify-between flex-wrap gap-2">
+                      <button
+                        onClick={() => toggleDropCardDone(card.id)}
+                        className={`px-3.5 py-2 border-2 border-black text-xs font-black uppercase flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[1px] active:translate-y-[1px] ${
+                          isDone
+                            ? 'bg-[#B2FF59] text-black hover:bg-lime-400'
+                            : 'bg-white text-black hover:bg-yellow-200'
+                        }`}
+                      >
+                        <Check className="w-4 h-4 stroke-[3]" />
+                        <span>
+                          {isDone
+                            ? (language === 'ua' ? '✓ Зроблено' : language === 'en' ? '✓ Done' : '✓ Сделано')
+                            : (language === 'ua' ? 'Позначити: Зроблено' : language === 'en' ? 'Mark as done' : 'Отметить: Сделано')}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const title = card.title;
+                          if (navigator.share) {
+                            navigator.share({
+                              title: title,
+                              text: `Інструкція "Сам собі мама": ${title}`,
+                              url: window.location.href,
+                            }).catch(() => {});
+                          } else {
+                            navigator.clipboard.writeText(`${title} - ${window.location.href}`);
+                            setCopiedCardId(card.id);
+                            setTimeout(() => setCopiedCardId(null), 2000);
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-white border-2 border-black text-xs font-black text-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-yellow-300 transition-all flex items-center gap-1.5 active:translate-x-[1px] active:translate-y-[1px]"
+                      >
+                        {copiedCardId === card.id ? <Check className="w-4 h-4 stroke-[3]" /> : <Share2 className="w-4 h-4 stroke-[3]" />}
+                        {copiedCardId === card.id ? content.sos.linkCopied : content.sos.shareCard}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Step-by-step Guide [U-01] */}
       <section className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
         <div className="flex items-center gap-3 mb-4">

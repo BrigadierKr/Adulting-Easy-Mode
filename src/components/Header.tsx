@@ -53,7 +53,7 @@ export const Header: React.FC = () => {
             }
           >
             <Award className="w-4 h-4 text-black stroke-[3]" />
-            <span className="hidden sm:inline">{unlockedAchievements.length}/20</span>
+            <span className="hidden sm:inline">{unlockedAchievements.length}/{content.achievements.list.length}</span>
             <span className="sm:hidden">{unlockedAchievements.length}</span>
           </button>
 

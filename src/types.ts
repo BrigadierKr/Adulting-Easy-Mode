@@ -50,6 +50,12 @@ export interface LaundrySymbol {
   momNote: string;
 }
 
+export interface SeasonBlock {
+  title: string;
+  subtitle: string;
+  cards: SosCard[];
+}
+
 export interface SosCard {
   id: string;
   query: string;
@@ -57,6 +63,7 @@ export interface SosCard {
   badge?: string;
   steps: string[];
   humor?: string;
+  videoSafe?: boolean;
 }
 
 export interface QuizQuestion {
@@ -135,6 +142,8 @@ export interface AppContent {
       reserve: string;
     };
   };
+  heating: SeasonBlock;
+  repair: SeasonBlock;
   cleaning: {
     dailyTitle: string;
     dailySubtitle: string;
@@ -162,5 +171,23 @@ export interface AppContent {
     unlockedCount: string;
     list: Achievement[];
   };
+  gamification: GamificationContent;
   tips: string[];
 }
+
+export interface GamificationContent {
+  levels: string[];
+  levelLabel: string;
+  xpLabel: string;
+  xpRulesTitle: string;
+  xpRules: string[];
+  streakForms: [string, string, string];
+  streakLostTitle: string;
+  streakLostText: string;
+  shareButton: string;
+  periodLabel: string;
+  ctaLine: string;
+  shareTemplate: string;
+}
+
+

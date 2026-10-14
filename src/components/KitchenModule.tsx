@@ -21,9 +21,13 @@ export const KitchenModule: React.FC = () => {
 
   const handleQuizSubmit = () => {
     setQuizSubmitted(true);
-    markQuizCompleted('kitchen_quiz');
+    const isFlawless = content.kitchen.quiz.every(
+      (q) => selectedQuizAnswers[q.id] === q.correctIndex
+    );
+    markQuizCompleted('kitchen_quiz', isFlawless);
     unlockAchievement('ach-1'); // Не спалив кухню
   };
+
 
   return (
     <div className="space-y-6">

@@ -24,6 +24,22 @@ export const GlobalSearchModal: React.FC = () => {
       c.steps.some((s) => s.toLowerCase().includes(query.toLowerCase()))
   );
 
+  // Search Heating cards (Autumn Drop)
+  const matchedHeating = content.heating.cards.filter(
+    (c) =>
+      c.title.toLowerCase().includes(query.toLowerCase()) ||
+      c.query.toLowerCase().includes(query.toLowerCase()) ||
+      c.steps.some((s) => s.toLowerCase().includes(query.toLowerCase()))
+  );
+
+  // Search Repair cards (Autumn Drop)
+  const matchedRepair = content.repair.cards.filter(
+    (c) =>
+      c.title.toLowerCase().includes(query.toLowerCase()) ||
+      c.query.toLowerCase().includes(query.toLowerCase()) ||
+      c.steps.some((s) => s.toLowerCase().includes(query.toLowerCase()))
+  );
+
   // Search Laundry symbols
   const matchedSymbols = content.sos.laundrySymbols.filter(
     (s) =>
@@ -108,6 +124,48 @@ export const GlobalSearchModal: React.FC = () => {
                 </div>
               )}
 
+              {/* Heating Season Results */}
+              {matchedHeating.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-orange-600 mb-2">
+                    🔥 Опалювальний сезон ({matchedHeating.length})
+                  </h4>
+                  <div className="space-y-1.5">
+                    {matchedHeating.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => handleSelectResult('utilities')}
+                        className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 hover:bg-orange-50 dark:hover:bg-orange-950/40 text-left flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors"
+                      >
+                        <span>{c.badge ? `${c.badge} ` : ''}{c.title}</span>
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Repair Results */}
+              {matchedRepair.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                    🛠️ Дрібний ремонт ({matchedRepair.length})
+                  </h4>
+                  <div className="space-y-1.5">
+                    {matchedRepair.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => handleSelectResult('sos')}
+                        className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 hover:bg-yellow-50 dark:hover:bg-slate-800 text-left flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors"
+                      >
+                        <span>{c.badge ? `${c.badge} ` : ''}{c.title}</span>
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Laundry Symbols Results */}
               {matchedSymbols.length > 0 && (
                 <div>
@@ -129,7 +187,7 @@ export const GlobalSearchModal: React.FC = () => {
                 </div>
               )}
 
-              {matchedRecipes.length === 0 && matchedSos.length === 0 && matchedSymbols.length === 0 && (
+              {matchedRecipes.length === 0 && matchedSos.length === 0 && matchedHeating.length === 0 && matchedRepair.length === 0 && matchedSymbols.length === 0 && (
                 <p className="text-center text-xs text-slate-400 py-8">
                   Нічого не знайдено за запитом «{query}»
                 </p>

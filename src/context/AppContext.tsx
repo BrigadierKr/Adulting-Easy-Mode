@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Language, ThemeMode, MeterEntry, BudgetData, AppContent } from '../types';
 import { contents } from '../data/content';
+import {
+  calculateStreak,
+  getLocalDateString,
+  getYesterdayDateString,
+  getLevelInfo,
+  LevelInfo,
+} from '../utils/gamification';
 
 interface AppContextType {
   language: Language;
@@ -12,6 +19,17 @@ interface AppContextType {
   activeTab: 'kitchen' | 'utilities' | 'cleaning' | 'sos' | 'achievements';
   setActiveTab: (tab: 'kitchen' | 'utilities' | 'cleaning' | 'sos' | 'achievements') => void;
   
+  // Gamification (v2.1)
+  xp: number;
+  streak: number;
+  activeDays: string[];
+  addXp: (amount: number, reason?: string) => void;
+  levelInfo: LevelInfo;
+  xpToast: { amount: number; id: number } | null;
+  clearXpToast: () => void;
+  streakLostToast: boolean;
+  dismissStreakLostToast: () => void;
+
   // Cleaning checklists
   dailyChecked: Record<number, boolean>;
   toggleDailyTask: (index: number) => void;
@@ -36,7 +54,11 @@ interface AppContextType {
 
   // Quizzes Completed
   completedQuizzes: string[];
-  markQuizCompleted: (quizId: string) => void;
+  markQuizCompleted: (quizId: string, isFlawless?: boolean) => void;
+
+  // Autumn Drop Cards Completed
+  completedDropCards: string[];
+  toggleDropCardDone: (cardId: string) => void;
 
   // Search Modal
   searchQuery: string;
@@ -48,6 +70,7 @@ interface AppContextType {
   isInstallable: boolean;
   installPwa: () => void;
 }
+
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -189,6 +212,94 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [latestUnlocked, setLatestUnlocked] = useState<{ id: string; title: string; icon: string } | null>(null);
 
+  // Gamification State (v2.1)
+  const [xp, setXp] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('xp_total');
+      return saved ? parseInt(saved, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [activeDays, setActiveDays] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('active_days');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [xpToast, setXpToast] = useState<{ amount: number; id: number } | null>(null);
+  const [streakLostToast, setStreakLostToast] = useState<boolean>(false);
+
+  const streak = useMemo(() => calculateStreak(activeDays), [activeDays]);
+
+  const levelInfo = useMemo(() => {
+    return getLevelInfo(xp, contents[language].gamification.levels);
+  }, [xp, language]);
+
+  // On mount: check if streak was broken (lastActive < yesterday)
+  useEffect(() => {
+    if (activeDays.length === 0) return;
+    const sorted = [...activeDays].sort();
+    const lastActive = sorted[sorted.length - 1];
+    const yesterday = getYesterdayDateString();
+
+    if (lastActive && lastActive < yesterday) {
+      const key = `streak_lost_seen_${lastActive}`;
+      if (!localStorage.getItem(key)) {
+        setStreakLostToast(true);
+        localStorage.setItem(key, 'true');
+      }
+    }
+  }, []);
+
+  // Auto-hide XP toast
+  useEffect(() => {
+    if (!xpToast) return;
+    const timer = setTimeout(() => {
+      setXpToast(null);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [xpToast]);
+
+  const dismissStreakLostToast = () => setStreakLostToast(false);
+  const clearXpToast = () => setXpToast(null);
+
+  const addXp = (amount: number) => {
+    if (amount <= 0) return;
+
+    setXp((prev) => {
+      const nextXp = prev + amount;
+      localStorage.setItem('xp_total', String(nextXp));
+      return nextXp;
+    });
+
+    const today = getLocalDateString();
+    setActiveDays((prev) => {
+      if (!prev.includes(today)) {
+        const nextDays = [...prev, today];
+        localStorage.setItem('active_days', JSON.stringify(nextDays));
+        return nextDays;
+      }
+      return prev;
+    });
+
+    setXpToast({ amount, id: Date.now() });
+  };
+
+  // Streak milestones: 7 days -> ach-27, 30 days -> ach-28
+  useEffect(() => {
+    if (streak >= 7 && !unlockedAchievements.includes('ach-27')) {
+      unlockAchievement('ach-27');
+    }
+    if (streak >= 30 && !unlockedAchievements.includes('ach-28')) {
+      unlockAchievement('ach-28');
+    }
+  }, [streak, unlockedAchievements]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -259,6 +370,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLatestUnlocked({ id: ach.id, title: ach.title, icon: ach.icon });
       }
 
+      // XP reward for new achievement: +25 XP
+      addXp(25);
+
       // Check for 10 achievements milestone
       if (newUnlocked.length >= 10 && !newUnlocked.includes('ach-20')) {
         setTimeout(() => unlockAchievement('ach-20'), 1500);
@@ -272,13 +386,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleDailyTask = (index: number) => {
     setDailyChecked((prev) => {
-      const updated = { ...prev, [index]: !prev[index] };
+      const isChecking = !prev[index];
+      const updated = { ...prev, [index]: isChecking };
       
-      // Check if all 5 daily tasks completed
+      // Check if all daily tasks completed
       const totalDaily = contents[language].cleaning.dailyTasks.length;
       const countChecked = Object.keys(updated).filter((k) => updated[Number(k)]).length;
-      if (countChecked >= totalDaily) {
+      if (countChecked >= totalDaily && isChecking) {
         unlockAchievement('ach-12'); // Чиста перемога
+        addXp(10); // Daily completed: +10 XP
       }
       return updated;
     });
@@ -286,11 +402,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const toggleWeeklyTask = (index: number) => {
     setWeeklyChecked((prev) => {
-      const updated = { ...prev, [index]: !prev[index] };
+      const isChecking = !prev[index];
+      const updated = { ...prev, [index]: isChecking };
       const totalWeekly = contents[language].cleaning.weeklyTasks.length;
       const countChecked = Object.keys(updated).filter((k) => updated[Number(k)]).length;
-      if (countChecked >= totalWeekly) {
+      if (countChecked >= totalWeekly && isChecking) {
         unlockAchievement('ach-6'); // Майстер швабри
+        addXp(20); // Weekly completed: +20 XP
       }
       return updated;
     });
@@ -308,6 +426,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setMeterEntries((prev) => [newEntry, ...prev]);
     unlockAchievement('ach-5'); // Показники вчасно
+    addXp(15); // Meter entry: +15 XP
   };
 
   const deleteMeterEntry = (id: string) => {
@@ -318,11 +437,62 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBudget((prev) => {
       const updated = { ...prev, ...data };
       unlockAchievement('ach-4'); // Економіст місяця
+      addXp(5); // Budget updated: +5 XP
       return updated;
     });
   };
 
-  const markQuizCompleted = (quizId: string) => {
+  const [completedDropCards, setCompletedDropCards] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('completed_drop_cards');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('completed_drop_cards', JSON.stringify(completedDropCards));
+  }, [completedDropCards]);
+
+  const toggleDropCardDone = (cardId: string) => {
+    const normId = cardId.toLowerCase();
+    setCompletedDropCards((prev) => {
+      const isAlreadyDone = prev.includes(normId);
+      const updated = isAlreadyDone
+        ? prev.filter((id) => id !== normId)
+        : [...prev, normId];
+
+      if (!isAlreadyDone) {
+        // Seasonal card marked done: +10 XP
+        addXp(10);
+
+        // Unlock card-specific achievements:
+        if (normId === 'h-01') unlockAchievement('ach-21');
+        if (normId === 'h-03') unlockAchievement('ach-22');
+        if (normId === 'h-04') unlockAchievement('ach-23');
+        if (normId === 'r-03') unlockAchievement('ach-24');
+        if (normId === 'r-04') unlockAchievement('ach-25');
+
+        // Check if all autumn drop cards (10 cards: h-01..h-05, r-01..r-05) are completed -> ach-26
+        const allDropCardIds = [
+          'h-01', 'h-02', 'h-03', 'h-04', 'h-05',
+          'r-01', 'r-02', 'r-03', 'r-04', 'r-05'
+        ];
+        const allDone = allDropCardIds.every((id) => updated.includes(id));
+        if (allDone) {
+          unlockAchievement('ach-26');
+        }
+      }
+
+      return updated;
+    });
+  };
+
+  const markQuizCompleted = (quizId: string, isFlawless = false) => {
+    // Award XP: +20 XP if flawless, otherwise +15 XP
+    addXp(isFlawless ? 20 : 15);
+
     if (!completedQuizzes.includes(quizId)) {
       const updated = [...completedQuizzes, quizId];
       setCompletedQuizzes(updated);
@@ -343,6 +513,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         content: contents[language],
         activeTab,
         setActiveTab,
+        xp,
+        streak,
+        activeDays,
+        addXp,
+        levelInfo,
+        xpToast,
+        clearXpToast,
+        streakLostToast,
+        dismissStreakLostToast,
         dailyChecked,
         toggleDailyTask,
         weeklyChecked,
@@ -359,6 +538,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearLatestUnlocked,
         completedQuizzes,
         markQuizCompleted,
+        completedDropCards,
+        toggleDropCardDone,
         searchQuery,
         setSearchQuery,
         isSearchOpen,
@@ -379,3 +560,4 @@ export const useApp = () => {
   }
   return context;
 };
+
