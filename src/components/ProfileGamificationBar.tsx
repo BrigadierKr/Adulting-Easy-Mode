@@ -99,7 +99,7 @@ export const ProfileGamificationBar: React.FC = () => {
               <span className="text-[10px] text-black/70 dark:text-slate-400">
                 {levelInfo.isMaxLevel
                   ? 'MAX 👑'
-                  : `${levelInfo.progressPercent}% (${levelInfo.xpNeededForNext} до наст.)`}
+                  : `${levelInfo.progressPercent}% (${levelInfo.xpNeededForNext} ${language === 'ua' ? 'до наст.' : language === 'en' ? 'to next' : 'до след.'})`}
               </span>
             </div>
             {/* Neo-brutalist Progress Bar */}
