@@ -32,8 +32,14 @@ export const ProfileGamificationBar: React.FC = () => {
           onClick={clearXpToast}
           className="fixed top-18 right-4 z-50 animate-bounce cursor-pointer flex items-center gap-2 px-3.5 py-2 bg-[#FFD600] border-3 border-black text-black font-black text-sm uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
         >
-          <Sparkles className="w-4 h-4 fill-black stroke-black animate-spin" />
-          <span>+{xpToast.amount} {content.gamification.xpLabel}</span>
+          {xpToast.customText ? (
+            <span>{xpToast.customText}</span>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 fill-black stroke-black animate-spin" />
+              <span>+{xpToast.amount} {content.gamification.xpLabel}</span>
+            </>
+          )}
         </div>
       )}
 

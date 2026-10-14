@@ -25,8 +25,9 @@ interface AppContextType {
   activeDays: string[];
   addXp: (amount: number, reason?: string) => void;
   levelInfo: LevelInfo;
-  xpToast: { amount: number; id: number } | null;
+  xpToast: { amount: number; id: number; customText?: string } | null;
   clearXpToast: () => void;
+  markDayActive: () => boolean;
   streakLostToast: boolean;
   dismissStreakLostToast: () => void;
 
@@ -231,7 +232,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  const [xpToast, setXpToast] = useState<{ amount: number; id: number } | null>(null);
+  const [xpToast, setXpToast] = useState<{ amount: number; id: number; customText?: string } | null>(null);
   const [streakLostToast, setStreakLostToast] = useState<boolean>(false);
 
   const streak = useMemo(() => calculateStreak(activeDays), [activeDays]);
@@ -267,6 +268,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const dismissStreakLostToast = () => setStreakLostToast(false);
   const clearXpToast = () => setXpToast(null);
+
+  /**
+   * Soft active day rule (v2.2):
+   * Adds today to active_days without granting XP and triggers notification toast.
+   */
+  const markDayActive = (): boolean => {
+    const today = getLocalDateString();
+    if (!activeDays.includes(today)) {
+      const nextDays = [...activeDays, today];
+      setActiveDays(nextDays);
+      localStorage.setItem('active_days', JSON.stringify(nextDays));
+      const toastText =
+        language === 'en'
+          ? '🔥 Day counted! +0 XP'
+          : language === 'ru'
+          ? '🔥 День засчитан! +0 XP'
+          : '🔥 День зараховано! +0 XP';
+      setXpToast({ amount: 0, customText: toastText, id: Date.now() });
+      return true;
+    }
+    return false;
+  };
 
   const addXp = (amount: number) => {
     if (amount <= 0) return;
@@ -385,6 +408,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleDailyTask = (index: number) => {
+    markDayActive();
     setDailyChecked((prev) => {
       const isChecking = !prev[index];
       const updated = { ...prev, [index]: isChecking };
@@ -401,6 +425,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const toggleWeeklyTask = (index: number) => {
+    markDayActive();
     setWeeklyChecked((prev) => {
       const isChecking = !prev[index];
       const updated = { ...prev, [index]: isChecking };
@@ -520,6 +545,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         levelInfo,
         xpToast,
         clearXpToast,
+        markDayActive,
         streakLostToast,
         dismissStreakLostToast,
         dailyChecked,

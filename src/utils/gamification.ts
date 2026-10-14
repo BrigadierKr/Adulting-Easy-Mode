@@ -47,6 +47,24 @@ export const calculateStreak = (days: string[]): number => {
   return 0;
 };
 
+/**
+ * Soft active day rule (v2.2):
+ * Marks today's date in active_days if not present yet, without granting XP.
+ */
+export const markDayActive = (days: string[]): { updatedDays: string[]; isNewlyActive: boolean } => {
+  const today = getLocalDateString();
+  if (days.includes(today)) {
+    return { updatedDays: days, isNewlyActive: false };
+  }
+  const nextDays = [...days, today];
+  try {
+    localStorage.setItem('active_days', JSON.stringify(nextDays));
+  } catch {
+    // ignore
+  }
+  return { updatedDays: nextDays, isNewlyActive: true };
+};
+
 export const getPluralForm = (num: number, forms: [string, string, string], lang: Language): string => {
   if (lang === 'en') {
     return num === 1 ? forms[0] : forms[1];

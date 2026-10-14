@@ -145,24 +145,24 @@ export const AchievementsModule: React.FC = () => {
 
         {/* 7-Day Wordle Activity Grid Visualization */}
         <div className="bg-[#F7F7F2] dark:bg-slate-950 border-3 border-black dark:border-slate-700 p-3.5 shadow-inner">
-          <div className="grid grid-cols-7 gap-2 text-center">
+          <div className="grid grid-cols-7 gap-2 justify-items-center text-center">
             {last7Days.map((d, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-1">
-                <span className="text-[10px] font-black uppercase text-black/60 dark:text-slate-400">
+              <div key={idx} className="flex flex-col items-center gap-1.5">
+                {/* Styled div cell (v2.2): replaces emoji */}
+                <div
+                  className={`w-8 h-8 rounded transition-all ${
+                    d.active
+                      ? 'bg-[#FFD600] border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                      : 'bg-transparent border-2 border-gray-400'
+                  }`}
+                  title={`${d.date}: ${d.active ? (language === 'ua' ? 'Активний день' : language === 'en' ? 'Active day' : 'Активный день') : (language === 'ua' ? 'Пропуск' : language === 'en' ? 'Skipped' : 'Пропуск')}`}
+                />
+                {/* Weekday label underneath */}
+                <span className="text-[11px] font-black uppercase text-black/70 dark:text-slate-300">
                   {d.label}
                 </span>
-                <div
-                  className={`w-full aspect-square max-w-[44px] flex items-center justify-center border-2 border-black font-black text-base transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
-                    d.active
-                      ? 'bg-[#FFD600] text-black'
-                      : 'bg-white dark:bg-slate-800 text-neutral-300 dark:text-slate-600'
-                  }`}
-                  title={`${d.date}: ${d.active ? 'Активний день' : 'Пропуск'}`}
-                >
-                  {d.active ? '🟨' : '⬜'}
-                </div>
                 {d.isToday && (
-                  <span className="text-[9px] font-black text-red-600 dark:text-red-400 uppercase tracking-tighter">
+                  <span className="text-[9px] font-black text-red-600 dark:text-red-400 uppercase tracking-tighter -mt-1">
                     {language === 'ua' ? 'Сьогодні' : language === 'en' ? 'Today' : 'Сегодня'}
                   </span>
                 )}
