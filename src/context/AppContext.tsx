@@ -67,6 +67,12 @@ interface AppContextType {
   isSearchOpen: boolean;
   setIsSearchOpen: (open: boolean) => void;
 
+  // Expanded Guide Modal
+  isGuideOpen: boolean;
+  setIsGuideOpen: (open: boolean) => void;
+  completedGuideSections: string[];
+  toggleGuideSectionDone: (chapterId: string) => void;
+
   // PWA Install
   isInstallable: boolean;
   installPwa: () => void;
@@ -326,6 +332,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // Expanded Guide State
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [completedGuideSections, setCompletedGuideSections] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('completed_guide_sections');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleGuideSectionDone = (chapterId: string) => {
+    const normId = chapterId.toLowerCase();
+    setCompletedGuideSections((prev) => {
+      const isAlreadyDone = prev.includes(normId);
+      const updated = isAlreadyDone
+        ? prev.filter((id) => id !== normId)
+        : [...prev, normId];
+      localStorage.setItem('completed_guide_sections', JSON.stringify(updated));
+
+      if (!isAlreadyDone) {
+        addXp(10);
+        const allChapters = ['guide-meters', 'guide-kitchen', 'guide-cleaning', 'guide-emergency', 'guide-rental', 'guide-repair'];
+        if (allChapters.every((id) => updated.includes(id))) {
+          addXp(20);
+        }
+      }
+
+      return updated;
+    });
+  };
+
   // PWA Install Prompt
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
@@ -570,6 +608,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSearchQuery,
         isSearchOpen,
         setIsSearchOpen,
+        isGuideOpen,
+        setIsGuideOpen,
+        completedGuideSections,
+        toggleGuideSectionDone,
         isInstallable,
         installPwa,
       }}

@@ -171,8 +171,51 @@ export interface AppContent {
     unlockedCount: string;
     list: Achievement[];
   };
+  guide: ExpandedGuideContent;
   gamification: GamificationContent;
   tips: string[];
+}
+
+export interface GuideStep {
+  number: number;
+  title: string;
+  description: string;
+  proTip?: string;
+  warning?: string;
+}
+
+export interface GuideChapter {
+  id: string;
+  category: 'meters' | 'kitchen' | 'cleaning' | 'emergency' | 'rental' | 'repair';
+  icon: string;
+  title: string;
+  subtitle: string;
+  readTime: string;
+  badge?: string;
+  steps: GuideStep[];
+  momNote: string;
+  checklist?: string[];
+  faq?: { question: string; answer: string }[];
+}
+
+export interface ExpandedGuideContent {
+  title: string;
+  subtitle: string;
+  buttonLabel: string;
+  searchPlaceholder: string;
+  allCategoriesLabel: string;
+  categories: {
+    id: string;
+    label: string;
+    icon: string;
+  }[];
+  chapters: GuideChapter[];
+  markReadLabel: string;
+  alreadyReadLabel: string;
+  progressTitle: string;
+  completeXpReward: string;
+  printOrShareLabel: string;
+  closeLabel: string;
 }
 
 export interface GamificationContent {

@@ -3,7 +3,7 @@ import { Search, X, ChevronRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const GlobalSearchModal: React.FC = () => {
-  const { content, isSearchOpen, setIsSearchOpen, setActiveTab } = useApp();
+  const { content, isSearchOpen, setIsSearchOpen, setIsGuideOpen, setActiveTab } = useApp();
   const [query, setQuery] = useState('');
 
   if (!isSearchOpen) return null;
@@ -47,9 +47,23 @@ export const GlobalSearchModal: React.FC = () => {
       s.desc.toLowerCase().includes(query.toLowerCase())
   );
 
+  // Search Expanded Guide Chapters
+  const matchedGuide = (content.guide?.chapters || []).filter(
+    (g) =>
+      g.title.toLowerCase().includes(query.toLowerCase()) ||
+      g.subtitle.toLowerCase().includes(query.toLowerCase()) ||
+      g.momNote.toLowerCase().includes(query.toLowerCase()) ||
+      g.steps.some((s) => s.title.toLowerCase().includes(query.toLowerCase()) || s.description.toLowerCase().includes(query.toLowerCase()))
+  );
+
   const handleSelectResult = (tab: 'kitchen' | 'utilities' | 'cleaning' | 'sos') => {
     setActiveTab(tab);
     setIsSearchOpen(false);
+  };
+
+  const handleSelectGuide = () => {
+    setIsSearchOpen(false);
+    setIsGuideOpen(true);
   };
 
   return (
@@ -187,7 +201,34 @@ export const GlobalSearchModal: React.FC = () => {
                 </div>
               )}
 
-              {matchedRecipes.length === 0 && matchedSos.length === 0 && matchedHeating.length === 0 && matchedRepair.length === 0 && matchedSymbols.length === 0 && (
+              {/* Guide Results */}
+              {matchedGuide.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-yellow-400 mb-2">
+                    📖 Розширений Гід ({matchedGuide.length})
+                  </h4>
+                  <div className="space-y-1.5">
+                    {matchedGuide.map((g) => (
+                      <button
+                        key={g.id}
+                        onClick={handleSelectGuide}
+                        className="w-full p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-left flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{g.icon}</span>
+                          <div>
+                            <div>{g.title}</div>
+                            <div className="text-[10px] font-normal text-slate-500 dark:text-slate-400">{g.subtitle}</div>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {matchedRecipes.length === 0 && matchedSos.length === 0 && matchedHeating.length === 0 && matchedRepair.length === 0 && matchedSymbols.length === 0 && matchedGuide.length === 0 && (
                 <p className="text-center text-xs text-slate-400 py-8">
                   Нічого не знайдено за запитом «{query}»
                 </p>

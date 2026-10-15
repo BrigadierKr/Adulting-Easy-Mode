@@ -12,6 +12,7 @@ import { QuickFixModule } from './components/QuickFixModule';
 import { AchievementsModule } from './components/AchievementsModule';
 import { AchievementToast } from './components/AchievementToast';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
+import { ExpandedGuideModal } from './components/ExpandedGuideModal';
 import { maybeNotifyMeterReadings } from './utils/reminders';
 
 const MainContent: React.FC = () => {
@@ -50,6 +51,7 @@ const MainContent: React.FC = () => {
 
       <Navigation />
       <GlobalSearchModal />
+      <ExpandedGuideModal />
       <AchievementToast />
     </div>
   );

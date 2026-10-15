@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Gauge, Calculator, Bell, Copy, Check, Plus, Trash2, ShieldCheck, AlertCircle, Sparkles, Send, Flame, ChevronDown, ChevronUp, Video, AlertTriangle, Share2 } from 'lucide-react';
+import { Gauge, Calculator, Bell, Copy, Check, Plus, Trash2, ShieldCheck, AlertCircle, Sparkles, Send, Flame, ChevronDown, ChevronUp, Video, AlertTriangle, Share2, BookOpen } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { enableReminders, remindersEnabled, remindersSupported, maybeNotifyMeterReadings } from '../utils/reminders';
 import { MeterChart } from './MeterChart';
 import { BudgetDonut } from './BudgetDonut';
 
 export const UtilitiesModule: React.FC = () => {
-  const { content, language, meterEntries, addMeterEntry, deleteMeterEntry, budget, updateBudget, unlockAchievement, completedDropCards, toggleDropCardDone } = useApp();
+  const { content, language, meterEntries, addMeterEntry, deleteMeterEntry, budget, updateBudget, unlockAchievement, completedDropCards, toggleDropCardDone, setIsGuideOpen } = useApp();
 
   const [copied, setCopied] = useState(false);
   const [testSent, setTestSent] = useState(false);
@@ -330,6 +330,14 @@ export const UtilitiesModule: React.FC = () => {
           <Sparkles className="w-4 h-4 text-black shrink-0 stroke-[3]" />
           <span>💬 {content.utilities.guideNote}</span>
         </div>
+
+        <button
+          onClick={() => setIsGuideOpen(true)}
+          className="mt-4 w-full sm:w-auto px-4 py-2.5 bg-[#FF6B6B] hover:bg-[#ff5252] text-white border-2 border-black font-black text-xs uppercase flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all"
+        >
+          <BookOpen className="w-4 h-4 stroke-[2.5]" />
+          <span>{content.guide?.title ? `Відкрити «${content.guide.title}»` : 'Відкрити Розширений Гід'}</span>
+        </button>
       </section>
 
       {/* Reminder & Notification Banner */}

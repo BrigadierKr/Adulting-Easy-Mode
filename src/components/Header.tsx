@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Download, Award, Sun, Moon, Monitor } from 'lucide-react';
+import { Search, Download, Award, Sun, Moon, Monitor, BookOpen } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Language, ThemeMode } from '../types';
 
@@ -11,6 +11,7 @@ export const Header: React.FC = () => {
     themeMode,
     setThemeMode,
     setIsSearchOpen,
+    setIsGuideOpen,
     isInstallable,
     installPwa,
     unlockedAchievements,
@@ -55,6 +56,16 @@ export const Header: React.FC = () => {
             <Award className="w-4 h-4 text-black stroke-[3]" />
             <span className="hidden sm:inline">{unlockedAchievements.length}/{content.achievements.list.length}</span>
             <span className="sm:hidden">{unlockedAchievements.length}</span>
+          </button>
+
+          {/* Expanded Guide Button */}
+          <button
+            onClick={() => setIsGuideOpen(true)}
+            className="flex items-center gap-1.5 px-2 py-1.5 bg-[#FF6B6B] text-white border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#ff5252] transition-all active:translate-x-[1px] active:translate-y-[1px]"
+            title={content.guide?.buttonLabel || 'Гід'}
+          >
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+            <span className="hidden sm:inline">{content.guide?.buttonLabel || 'Гід'}</span>
           </button>
 
           {/* Search Trigger */}

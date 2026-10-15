@@ -1,4 +1,5 @@
 import { AppContent, Language } from '../types';
+import { guideData } from './guideData';
 
 export const contents: Record<Language, AppContent> = {
   ua: {
@@ -792,6 +793,7 @@ export const contents: Record<Language, AppContent> = {
       ctaLine: 'Побий мій результат:',
       shareTemplate: '🏠 {appName} · {period}\n{grid}\n🔥 {streak} {streakWord} · 🏅 {level} · {xp} XP\n{cta} {link}',
     },
+    guide: guideData.ua,
     tips: [
       'Губка на кухні живе тиждень. Далі — біологічна зброя.',
       'Правило 2 хвилин: коротше за 2 хв — роби одразу.',
@@ -1605,6 +1607,7 @@ export const contents: Record<Language, AppContent> = {
       ctaLine: 'Beat my score:',
       shareTemplate: '🏠 {appName} · {period}\n{grid}\n🔥 {streak} {streakWord} · 🏅 {level} · {xp} XP\n{cta} {link}',
     },
+    guide: guideData.en,
     tips: [
       'A kitchen sponge lives one week. After that — biological weapon.',
       '2-minute rule: under 2 min = do it now.',
@@ -2418,6 +2421,7 @@ export const contents: Record<Language, AppContent> = {
       ctaLine: 'Побей мой результат:',
       shareTemplate: '🏠 {appName} · {period}\n{grid}\n🔥 {streak} {streakWord} · 🏅 {level} · {xp} XP\n{cta} {link}',
     },
+    guide: guideData.ru,
     tips: [
       'Губка на кухне живёт неделю. Дальше — биологическое оружие.',
       'Правило 2 минут: короче 2 мин — делай сразу.',
